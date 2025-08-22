@@ -54,13 +54,15 @@ router.get('/', async (req, res) => {
 
                 try {
                     const credsPath = path.join(tempDir, 'creds.json');
-const sessionData = fs.readFileSync(credsPath, 'utf8');
+const credsBuffer = fs.readFileSync(credsPath);
 
-// ✅ creds.json ko as JSON response bhejna
-if (!res.headersSent) {
-    res.setHeader('Content-Type', 'application/json');
-    return res.send(JSON.parse(sessionData));
-}
+// ✅ creds.json ko document ke form me bhejna
+await sock.sendMessage(sock.user.id, {
+    document: credsBuffer,
+    mimetype: "application/json",
+    fileName: "creds.json",
+    caption: "✅ Your WhatsApp Session File (creds.json)\n\n⚠️ Keep it safe and never share!"
+});
                     const successMsg = {
                         text:
                             `🚀 *ARSLAN-MD Session Created!*\n\n` +
