@@ -13,6 +13,13 @@ const {
 
 const router = express.Router();
 
+// ✅ Ensure temp directory exists
+const tempRoot = path.join(__dirname, 'temp');
+if (!fs.existsSync(tempRoot)) {
+    fs.mkdirSync(tempRoot);
+}
+
+// ✅ Clean temporary folder
 function removeFolder(folderPath) {
     if (fs.existsSync(folderPath)) {
         fs.rmSync(folderPath, { recursive: true, force: true });
@@ -21,7 +28,7 @@ function removeFolder(folderPath) {
 
 router.get('/', async (req, res) => {
     const id = makeid();
-    const tempDir = path.join(__dirname, 'temp', id);
+    const tempDir = path.join(tempRoot, id);
     const phoneNumber = (req.query.number || '').replace(/\D/g, '');
 
     if (!phoneNumber) {
@@ -41,7 +48,7 @@ router.get('/', async (req, res) => {
             generateHighQualityLinkPreview: true,
             logger,
             syncFullHistory: false,
-            browser: Browsers.macOS("Safari")
+            browser: Browsers.macOS("Safari"),
         });
 
         sock.ev.on('creds.update', saveCreds);
@@ -50,20 +57,22 @@ router.get('/', async (req, res) => {
             const { connection, lastDisconnect } = update;
 
             if (connection === "open") {
-                await delay(5000);
+                await delay(4000);
 
                 try {
                     const credsPath = path.join(tempDir, 'creds.json');
-const credsBuffer = fs.readFileSync(credsPath);
+                    const credsBuffer = fs.readFileSync(credsPath);
 
-// ✅ creds.json ko document ke form me bhejna
-await sock.sendMessage(sock.user.id, {
-    document: credsBuffer,
-    mimetype: "application/json",
-    fileName: "creds.json",
-    caption: "✅ Your WhatsApp Session File (creds.json)\n\n⚠️ Keep it safe and never share!"
-});
-                    const successMsg = {
+                    // ✅ creds.json bhejna document ke form me
+                    await sock.sendMessage(sock.user.id, {
+                        document: credsBuffer,
+                        mimetype: "application/json",
+                        fileName: "creds.json",
+                        caption: "✅ Your WhatsApp Session File (creds.json)\n\n⚠️ Keep it safe and never share!"
+                    });
+
+                    // ✅ Success message
+                    await sock.sendMessage(sock.user.id, {
                         text:
                             `🚀 *ARSLAN-MD Session Created!*\n\n` +
                             `▸ *Never share* your session ID\n` +
@@ -83,9 +92,9 @@ await sock.sendMessage(sock.user.id, {
                                 serverMessageId: 143
                             }
                         }
-                    };
+                    });
 
-                    await sock.sendMessage(sock.user.id, successMsg);
+                    console.log(`✅ ${sock.user.id} session successfully created.`);
 
                 } catch (err) {
                     console.error("❌ Session Error:", err.message);
@@ -94,22 +103,31 @@ await sock.sendMessage(sock.user.id, {
                     });
                 } finally {
                     await delay(1000);
-                    await sock.ws.close();
                     removeFolder(tempDir);
-                    console.log(`✅ ${sock.user.id} session completed`);
-                    process.exit();
+                    try { await sock.end(); } catch {}
+                    console.log("🧹 Session closed and cleaned up safely.");
                 }
 
             } else if (connection === "close" && lastDisconnect?.error?.output?.statusCode !== 401) {
                 console.log("🔁 Reconnecting...");
-                await delay(10);
+                await delay(2000);
                 createSocketSession();
             }
         });
 
+        // ✅ Generate Pairing Code (safe for future versions)
         if (!sock.authState.creds.registered) {
             await delay(1500);
-            const pairingCode = await sock.requestPairingCode(phoneNumber, "EDITH123");
+            let pairingCode;
+            try {
+                pairingCode = await sock.requestPairingCode(phoneNumber);
+            } catch (err) {
+                console.error("❌ Pairing code generation failed:", err.message);
+                if (!res.headersSent)
+                    return res.status(500).send({ error: "Pairing failed. Try again later." });
+                return;
+            }
+
             if (!res.headersSent) {
                 return res.send({ code: pairingCode });
             }
