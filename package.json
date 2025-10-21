@@ -1,18 +1,18 @@
 
 {
-  "name": "EDITH-MD-PAIR",
+  "name": "ARSLAN-MD-PAIR",
   "version": "1.0.0",
   "description": "A multi-functional WhatsApp bot with web pairing functionality",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "start": "pm2 start index.js --deep-monitoring --attach --name edith-md",
-    "stop": "pm2 stop edith-md",
-    "restart": "pm2 restart edith-md",
+    "start": "pm2 start index.js --deep-monitoring --attach --name arslan-md",
+    "stop": "pm2 stop arslan-md",
+    "restart": "pm2 restart arslan-md",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "Bandaheali",
+  "author": "Arslan-MD",
   "license": "ISC",
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
