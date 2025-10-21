@@ -8,7 +8,7 @@
 "start": "pm2 start index.js --deep-monitoring --attach --name arslan-md",
 "stop": "pm2 stop arslan-md",
 "restart": "pm2 restart arslan-md",
-"test": "echo "Error: no test specified" && exit 1"
+"test": "echo"
 },
 "keywords": [],
 "author": "Arslan-MD",
